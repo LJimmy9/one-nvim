@@ -12,7 +12,7 @@ vim.o.backup = false
 vim.g.mapleader = " "
 vim.g.maplocalleader = ","
 
-vim.keymap.set("n", "<Esc>", "[[nohlsearch<CR>]]")
+vim.keymap.set("n", "<Esc>", "[[:nohlsearch<CR>]]")
 vim.keymap.set("n", "<leader>qq", [[:q<CR>]])
 vim.keymap.set("n", "<leader>ss", [[:w<CR>]])
 vim.keymap.set("n", "<leader>so", [[:so<CR>]])
@@ -436,7 +436,6 @@ local neogit = {
 
 local quicker = {
   'stevearc/quicker.nvim',
-  event = "FileType qf",
   opts = {},
   config = function()
     vim.keymap.set("n", "<leader>qf", function()
@@ -467,7 +466,7 @@ local quicker = {
           desc = "Collapse quickfix context",
         },
         {
-          "<gr>",
+          "gr",
           function()
             require("quicker").refresh()
           end,
