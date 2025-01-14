@@ -91,7 +91,7 @@ local snacks = {
     statuscolumn = { enabled = true },
   },
   keys = {
-    { "<leader>tt", function() Snacks.terminal() end, desc = "Toggle Terminal" },
+    { "tt", function() Snacks.terminal() end, desc = "Toggle Terminal" },
   }
 }
 
@@ -150,7 +150,15 @@ local oil = {
         ["<C-h>"] = { "actions.select", opts = { horizontal = true } },
         ["<C-t>"] = { "actions.select", opts = { tab = true } },
         ["<C-p>"] = "actions.preview",
-        ["<C-c>"] = { "actions.close", mode = "n" },
+        -- ["<C-c>"] = { "actions.close", mode = "n" },
+        ['<C-c>'] = {
+          desc = 'Copy filepath to system clipboard',
+          callback = function()
+            require('oil.actions').copy_entry_path.callback()
+            vim.fn.setreg("+", vim.fn.getreg(vim.v.register))
+          end,
+          mode = "n"
+        },
         ["<C-l>"] = "actions.refresh",
         ["<BS>"] = { "actions.parent", mode = "n" },
         ["_"] = { "actions.open_cwd", mode = "n" },
@@ -554,7 +562,8 @@ local nvim_lspconfig = {
     local servers = {
       clangd = {},
       -- gopls = {},
-      pyright = {},
+      -- pyright = {},
+      pylsp = {},
       -- rust_analyzer = {},
       -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
       -- Some languages (like typescript) have entire language plugins that can be useful:
@@ -709,42 +718,56 @@ local nvim_dap = {
   },
   keys = {
     {
-      'ds',
+      'dsc',
       function()
         require('dap').continue()
       end,
       desc = 'Debug: Start/Continue',
     },
     {
-      'di',
+      'dsi',
       function()
         require('dap').step_into()
       end,
       desc = 'Debug: Step Into',
     },
     {
-      'dn',
+      'dsn',
       function()
         require('dap').step_over()
       end,
       desc = 'Debug: Step Over',
     },
     {
-      'do',
+      'dso',
       function()
         require('dap').step_out()
       end,
       desc = 'Debug: Step Out',
     },
     {
-      'db',
+      'dsb',
       function()
         require('dap').toggle_breakpoint()
       end,
       desc = 'Debug: Toggle Breakpoint',
     },
     {
-      'dt',
+      'dse',
+      function()
+        vim.ui.input({ prompt = "Enter expression for breakpoint: " }, function(input)
+          if input then
+            require('dap').toggle_breakpoint(input, nil, nil)
+          else
+            print("No expression provided, using default breakpoint.")
+            require('dap').toggle_breakpoint()
+          end
+        end)
+      end,
+      desc = 'Debug: Toggle Breakpoint',
+    },
+    {
+      'dst',
       function()
         require('dapui').toggle()
       end,
@@ -775,6 +798,28 @@ local nvim_dap = {
     dap.listeners.before.event_exited['dapui_config'] = dapui.close
 
     require('dap-python').setup()
+
+    -- /opt/homebrew/Cellar/llvm/19.1.6/bin/lldb-dap
+    dap.adapters.lldb = {
+      type = 'executable',
+      command = vim.fn.expand('$HOME') .. '/bin/llvm/19.1.6/bin/lldb-dap', -- adjust as needed, must be absolute path
+      name = 'lldb'
+    }
+    dap.configurations.cpp = {
+      {
+        name = 'Launch',
+        type = 'lldb',
+        request = 'launch',
+        program = function()
+          return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+        end,
+        cwd = '${workspaceFolder}',
+        -- sourcePath = 'test.dSYM/',
+        stopOnEntry = true,
+        args = {},
+      },
+    }
+    dap.configurations.c = dap.configurations.cpp
   end
 }
 --- Setup lazy.nvim
