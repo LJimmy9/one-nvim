@@ -12,7 +12,7 @@ vim.o.backup = false
 vim.g.mapleader = " "
 vim.g.maplocalleader = ","
 
-vim.keymap.set("n", "<Esc>", "[[:nohlsearch<CR>]]")
+vim.keymap.set("n", "<esc>", [[:nohl<CR>]])
 vim.keymap.set("n", "<leader>qq", [[:q<CR>]])
 vim.keymap.set("n", "<leader>ss", [[:w<CR>]])
 vim.keymap.set("n", "<leader>so", [[:so<CR>]])
