@@ -1,3 +1,7 @@
+if vim.fn.has('win32') == 1 or vim.fn.has('win64') == 1 then
+  vim.opt.shell = 'powershell'
+end
+
 vim.o.clipboard = "unnamedplus"
 vim.o.relativenumber = true
 vim.o.breakindent = true
