@@ -554,7 +554,7 @@ local nvim_lspconfig = {
     local servers = {
       clangd = {},
       -- gopls = {},
-      -- pyright = {},
+      pyright = {},
       -- rust_analyzer = {},
       -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
       -- Some languages (like typescript) have entire language plugins that can be useful:
@@ -699,11 +699,90 @@ local autosession = {
 
 }
 
+local nvim_dap = {
+  'mfussenegger/nvim-dap',
+  dependencies = {
+    'rcarriga/nvim-dap-ui',
+    'nvim-neotest/nvim-nio',
+
+    'mfussenegger/nvim-dap-python',
+  },
+  keys = {
+    {
+      'ds',
+      function()
+        require('dap').continue()
+      end,
+      desc = 'Debug: Start/Continue',
+    },
+    {
+      'di',
+      function()
+        require('dap').step_into()
+      end,
+      desc = 'Debug: Step Into',
+    },
+    {
+      'dn',
+      function()
+        require('dap').step_over()
+      end,
+      desc = 'Debug: Step Over',
+    },
+    {
+      'do',
+      function()
+        require('dap').step_out()
+      end,
+      desc = 'Debug: Step Out',
+    },
+    {
+      'db',
+      function()
+        require('dap').toggle_breakpoint()
+      end,
+      desc = 'Debug: Toggle Breakpoint',
+    },
+    {
+      'dt',
+      function()
+        require('dapui').toggle()
+      end,
+      desc = 'Debug: See last session result.',
+    },
+  },
+  config = function()
+    local dap = require 'dap'
+    local dapui = require 'dapui'
+    dapui.setup {
+      icons = { expanded = '▾', collapsed = '▸', current_frame = '*' },
+      controls = {
+        icons = {
+          pause = '⏸',
+          play = '▶',
+          step_into = '⏎',
+          step_over = '⏭',
+          step_out = '⏮',
+          step_back = 'b',
+          run_last = '▶▶',
+          terminate = '⏹',
+          disconnect = '⏏',
+        },
+      },
+    }
+    dap.listeners.after.event_initialized['dapui_config'] = dapui.open
+    dap.listeners.before.event_terminated['dapui_config'] = dapui.close
+    dap.listeners.before.event_exited['dapui_config'] = dapui.close
+
+    require('dap-python').setup()
+  end
+}
 --- Setup lazy.nvim
 require("lazy").setup({
   spec = {
     -- import your plugins
     {
+      nvim_dap,
       autosession,
       lualine,
       blink,
