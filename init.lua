@@ -799,7 +799,6 @@ local nvim_dap = {
 
     require('dap-python').setup()
 
-    -- /opt/homebrew/Cellar/llvm/19.1.6/bin/lldb-dap
     dap.adapters.lldb = {
       type = 'executable',
       command = vim.fn.expand('$HOME') .. '/bin/llvm/19.1.6/bin/lldb-dap', -- adjust as needed, must be absolute path
@@ -814,7 +813,6 @@ local nvim_dap = {
           return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
         end,
         cwd = '${workspaceFolder}',
-        -- sourcePath = 'test.dSYM/',
         stopOnEntry = true,
         args = {},
       },
