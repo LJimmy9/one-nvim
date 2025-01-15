@@ -40,8 +40,6 @@ vim.keymap.set("n", "<leader>rc", function()
   end)
 end)
 
-vim.keymap.set("n", "<leader>rc", [[:set makeprg=]])
-
 vim.keymap.set({ "n", "v" }, "<c-a>", "_")
 vim.keymap.set({ "n", "v" }, "<c-e>", "$")
 vim.keymap.set({ "i" }, "<c-a>", "<c-o>_")
@@ -101,7 +99,6 @@ local snacks = {
   opts = {
     animate = { enabled = true },
     indent = { enabled = true },
-    input = { enabled = true },
     scroll = { enabled = true },
     statuscolumn = { enabled = true },
   },
@@ -835,11 +832,28 @@ local nvim_dap = {
     dap.configurations.c = dap.configurations.cpp
   end
 }
+
+local noice = {
+  "folke/noice.nvim",
+  event = "VeryLazy",
+  opts = {
+    routes = {
+      {
+        view = "split",
+        filter = { event = "msg_show", min_height = 2 },
+      },
+    },
+  },
+  dependencies = {
+    "MunifTanjim/nui.nvim",
+  }
+}
 --- Setup lazy.nvim
 require("lazy").setup({
   spec = {
     -- import your plugins
     {
+      noice,
       nvim_dap,
       autosession,
       lualine,
