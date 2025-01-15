@@ -1,5 +1,10 @@
 if vim.fn.has('win32') == 1 or vim.fn.has('win64') == 1 then
   vim.opt.shell = 'powershell'
+  vim.opt.shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command '
+  vim.opt.shellxquote = ''
+  vim.opt.shellquote = ''
+  vim.opt.shellredir = '| Out-File -Encoding UTF8 %s'
+  vim.opt.shellpipe = '| Out-File -Encoding UTF8 %s'
 end
 
 vim.o.clipboard = "unnamedplus"
@@ -23,8 +28,18 @@ vim.keymap.set("n", "<leader>so", [[:so<CR>]])
 
 
 vim.keymap.set("n", "<leader>rr", function()
-  vim.cmd([[make | copen]])
+  vim.cmd([[make]])
 end)
+
+vim.keymap.set("n", "<leader>rc", function()
+  vim.ui.input({ prompt = "Enter a command" }, function(input)
+    if input then
+      local cmd = [[set makeprg=]] .. string.gsub(input, [[ ]], [[\ ]])
+      vim.cmd(cmd)
+    end
+  end)
+end)
+
 vim.keymap.set("n", "<leader>rc", [[:set makeprg=]])
 
 vim.keymap.set({ "n", "v" }, "<c-a>", "_")
