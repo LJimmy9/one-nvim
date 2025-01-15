@@ -334,6 +334,7 @@ local neogit = {
   config = function()
     local neogit = require("neogit")
     neogit.setup {
+      process_spinner = false,
       integrations = { diffview = true }, -- adds integration with diffview.nvim
       mappings = {
         commit_editor = {
