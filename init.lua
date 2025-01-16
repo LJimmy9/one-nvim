@@ -7,8 +7,8 @@ if vim.fn.has('win32') == 1 or vim.fn.has('win64') == 1 then
   vim.o.shellpipe = '| Out-File -Encoding UTF8 %s'
 end
 
+vim.o.number = true
 vim.o.clipboard = "unnamedplus"
-vim.o.relativenumber = true
 vim.o.breakindent = true
 vim.o.textwidth = 80
 vim.o.cursorline = true
@@ -60,19 +60,6 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter" }, {
   callback = function()
     vim.cmd("silent! checktime")
   end
-})
-
-vim.api.nvim_create_autocmd({ "BufWinLeave" }, {
-  group = auto_reload_group,
-  pattern = { "*.*" },
-  desc = "save view (folds), when closing file",
-  command = "mkview",
-})
-vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
-  group = auto_reload_group,
-  pattern = { "*.*" },
-  desc = "load view (folds), when opening file",
-  command = "silent! loadview"
 })
 
 --- Execute
@@ -158,11 +145,11 @@ local snacks = {
           finder = "vim_history",
           name = "cmd",
           format = "text",
-          preview = "none",
           layout = {
+            preview = false,
             preset = "ivy",
           },
-          confirm = "cmd",
+          main = { current = true },
           win = {
             input = {
               keys = {
@@ -195,7 +182,7 @@ local snacks = {
     { "<leader>fp", function() Snacks.picker.registers() end,           desc = "Registers" },
     { "<leader>fk", function() Snacks.picker.keymaps() end,             desc = "Keymaps" },
     { "<leader>fd", function() Snacks.picker.diagnostics() end,         desc = "Diagnostics" },
-    { "<leader>fh", function() Snacks.picker.command_history() end,     desc = "Command History" },
+    { "<leader>;",  function() Snacks.picker.command_history() end,     desc = "Command History" },
     { "<leader>fm", function() Snacks.picker.marks() end,               desc = "Marks" },
     { "<leader>fj", function() Snacks.picker.jumps() end,               desc = "Jumps" },
     { '<leader>fr', function() Snacks.picker.registers() end,           desc = "Registers" },
@@ -427,17 +414,17 @@ local gitsigns = {
         vim.keymap.set(mode, l, r, opts)
       end
       -- Navigation
-      map('n', ']c', function()
+      map('n', ']h', function()
         if vim.wo.diff then
-          vim.cmd.normal({ ']c', bang = true })
+          vim.cmd.normal({ ']h', bang = true })
         else
           gitsigns.nav_hunk('next')
         end
       end)
 
-      map('n', '[c', function()
+      map('n', '[h', function()
         if vim.wo.diff then
-          vim.cmd.normal({ '[c', bang = true })
+          vim.cmd.normal({ '[h', bang = true })
         else
           gitsigns.nav_hunk('prev')
         end
@@ -446,6 +433,7 @@ local gitsigns = {
       -- Actions
       map('n', 'tb', gitsigns.toggle_current_line_blame)
       map('n', 'td', gitsigns.toggle_deleted)
+      map('n', 'tr', gitsigns.reset_hunk)
 
       -- Text object
       map({ 'o', 'x' }, 'ih', ':<C-U>Gitsigns select_hunk<CR>')
