@@ -30,20 +30,8 @@ vim.keymap.set("n", "<leader>qq", [[:q<CR>]])
 vim.keymap.set("n", "<leader>ss", [[:w<CR>]])
 vim.keymap.set("n", "<leader>so", [[:so<CR>]])
 
-vim.keymap.set({ "n", "v" }, "y", [[y'>]])
-
-vim.keymap.set("n", "<leader>rr", function()
-  vim.cmd([[make]])
-end)
-
-vim.keymap.set("n", "<leader>rc", function()
-  vim.ui.input({ prompt = "Enter a build command" }, function(input)
-    if input then
-      local cmd = [[set makeprg=]] .. string.gsub(input, [[ ]], [[\ ]])
-      vim.cmd(cmd)
-    end
-  end)
-end)
+vim.keymap.set({ "v" }, "y", [[y'>]])
+vim.keymap.set('t', '<esc>', '<C-\\><C-n>')
 
 vim.keymap.set({ "n", "v" }, "<c-a>", "_")
 vim.keymap.set({ "n", "v" }, "<c-e>", "$")
@@ -785,10 +773,10 @@ local autosession = {
 
 local nvim_dap = {
   'mfussenegger/nvim-dap',
+  -- lazy = true,
   dependencies = {
     'rcarriga/nvim-dap-ui',
     'nvim-neotest/nvim-nio',
-
     'mfussenegger/nvim-dap-python',
   },
   keys = {
@@ -896,11 +884,66 @@ local nvim_dap = {
   end
 }
 
+local compile_mode = {
+  "ej-shafran/compile-mode.nvim",
+  -- you can just use the latest version:
+  branch = "latest",
+  -- or the most up-to-date updates:
+  -- branch = "nightly",
+  dependencies = {
+    "nvim-lua/plenary.nvim",
+    -- if you want to enable coloring of ANSI escape codes in
+    -- compilation output, add:
+    { "m00qek/baleia.nvim", tag = "v1.3.0" },
+  },
+  config = function()
+    ---@type CompileModeOpts
+    vim.g.compile_mode = {
+      -- to add ANSI escape code support, add:
+      baleia_setup = true,
+      error_regexp_table = {
+        typescript = {
+          -- TypeScript errors take the form
+          -- "path/to/error-file.ts(13,23): error TS22: etc."
+          regex = "^\\(.\\+\\)(\\([1-9][0-9]*\\),\\([1-9][0-9]*\\)): error TS[1-9][0-9]*:",
+          filename = 1,
+          row = 2,
+          col = 3,
+        }
+      }
+    }
+
+    vim.keymap.set("n", "rr", function()
+      vim.cmd([[botright Compile]])
+    end)
+    vim.keymap.set("n", "rc", function()
+      vim.cmd([[botright Recompile]])
+    end)
+    local split_and_gf = vim.api.nvim_replace_termcodes('<c-w>o<c-w>sgFzz', true, false, true)
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "compilation",
+      callback = function()
+        vim.keymap.set("n", "gd", function()
+          vim.api.nvim_feedkeys(split_and_gf, 't', false)
+        end, { buffer = true })
+      end,
+    })
+    -- require('compile-mode.errors').error_regexp_table.deno = {
+    --   regex = "^error:.*at file:///(.*):([0-9]+):([0-9]+)$",
+    --   filename = 1,
+    --   row = 2,
+    --   col = 3,
+    --   type = { 2 }
+    -- }
+  end
+}
+
 --- Setup lazy.nvim
 require("lazy").setup({
   spec = {
     -- import your plugins
     {
+      compile_mode,
       nvim_dap,
       autosession,
       gitsigns,
