@@ -425,6 +425,7 @@ local gitsigns = {
 
       -- Text object
       map({ 'o', 'x' }, 'ih', ':<C-U>Gitsigns select_hunk<CR>')
+      map({ 'o', 'x' }, 'ah', ':<C-U>Gitsigns select_hunk<CR>')
     end
   }
 }
@@ -966,3 +967,76 @@ require("lazy").setup({
   -- automatically check for plugin updates
   checker = { enabled = false },
 })
+
+local function try_find_file()
+  local line = vim.api.nvim_get_current_line()
+  -- Find first occurrence of / or \ (For windows)
+  local start_idx = string.find(line, "[/\\]") or 1
+  local curr_idx = start_idx
+
+  local function is_valid_char(s)
+    local chars = { '.', '/', [[\]] }
+    for _, c in ipairs(chars) do
+      if s == c then
+        return true
+      end
+    end
+    return false
+  end
+
+  local curr_char = string.sub(line, curr_idx, curr_idx)
+  while is_valid_char(curr_char) do
+    curr_idx = math.max(1, curr_idx - 1)
+    curr_char = string.sub(line, curr_idx, curr_idx)
+  end
+
+  local pos = {
+    row = "",
+    col = ""
+  }
+
+  curr_char = string.sub(line, curr_idx, curr_idx)
+  local target = pos.row
+  while (curr_char == ":") do
+    curr_idx = curr_idx + 1
+    while (tonumber(curr_char)) do
+      target = target .. curr_char
+      curr_idx = curr_idx + 1
+      curr_char = string.sub(line, curr_idx, curr_idx)
+    end
+    target = pos.col
+  end
+
+  local target_file_or_path = string.sub(line, start_idx, curr_idx)
+
+  local file_status = vim.fn.filereadable(target_file_or_path) == 1
+  local dir_status = vim.fn.isdirectory(target_file_or_path) == 1
+
+  if file_status or dir_status then
+    local has_split = #vim.api.nvim_tabpage_list_wins(0) > 1
+    if has_split then
+      vim.cmd('wincmd p')
+    else
+      vim.cmd('split')
+    end
+    vim.cmd('e ' .. target_file_or_path)
+    if file_status then
+      local target_row = tonumber(pos.row) or 1
+      local target_col = tonumber(pos.col) or 0
+      local status, msg = pcall(vim.api.nvim_win_set_cursor, 0, { target_row, target_col })
+      if not status then
+        vim.notify("WARNING\nError setting cursor at:" .. target_row .. ", " .. target_col .. "\n" .. msg,
+          vim.log.levels.WARN,
+          { title = "Failed setting cursor" })
+      end
+    end
+  else
+    vim.notify("ERROR\n Cannot find target:" .. target_file_or_path, vim.log.levels.ERROR, { title = "Error" })
+  end
+end
+
+vim.keymap.set("n", "<leader>gd", try_find_file)
+
+
+
+-- ../README.md
