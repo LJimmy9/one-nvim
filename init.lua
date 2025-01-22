@@ -920,22 +920,6 @@ local compile_mode = {
     vim.keymap.set("n", "rc", function()
       vim.cmd([[botright Recompile]])
     end)
-    local split_and_gf = vim.api.nvim_replace_termcodes('<c-w>o<c-w>sgFzz', true, false, true)
-    vim.api.nvim_create_autocmd("FileType", {
-      pattern = "compilation",
-      callback = function()
-        vim.keymap.set("n", "gd", function()
-          vim.api.nvim_feedkeys(split_and_gf, 't', false)
-        end, { buffer = true })
-      end,
-    })
-    -- require('compile-mode.errors').error_regexp_table.deno = {
-    --   regex = "^error:.*at file:///(.*):([0-9]+):([0-9]+)$",
-    --   filename = 1,
-    --   row = 2,
-    --   col = 3,
-    --   type = { 2 }
-    -- }
   end
 }
 
@@ -968,11 +952,12 @@ require("lazy").setup({
   checker = { enabled = false },
 })
 
+
+-- TODO: Fix bounds checking
+-- TODO: Add ~ home directory support
 local function try_find_file()
   local line = vim.api.nvim_get_current_line()
-  -- Find first occurrence of / or \ (For windows)
-  local start_idx = string.find(line, "[/\\]") or 1
-  local curr_idx = start_idx
+  local curr_idx = string.find(line, "[/\\]") or 1
 
   local function is_valid_char(s)
     local chars = { '.', '/', [[\]] }
@@ -991,23 +976,29 @@ local function try_find_file()
   end
 
   local pos = {
-    row = "",
-    col = ""
+    "",
+    ""
   }
+  local pos_idx = 1
 
-  curr_char = string.sub(line, curr_idx, curr_idx)
-  local target = pos.row
+  local target_file_or_path = string.sub(line, curr_idx + 1, #line)
+
+  local break_chars = "[ \t\r\n]"
+  local end_idx = string.find(target_file_or_path, ":") or string.find(target_file_or_path, break_chars) or #line + 1
+  curr_idx = end_idx
+  curr_char = string.sub(target_file_or_path, end_idx, end_idx)
   while (curr_char == ":") do
     curr_idx = curr_idx + 1
+    curr_char = string.sub(target_file_or_path, curr_idx, curr_idx)
     while (tonumber(curr_char)) do
-      target = target .. curr_char
+      pos[pos_idx] = pos[pos_idx] .. curr_char
       curr_idx = curr_idx + 1
-      curr_char = string.sub(line, curr_idx, curr_idx)
+      curr_char = string.sub(target_file_or_path, curr_idx, curr_idx)
     end
-    target = pos.col
+    pos_idx = 2
   end
 
-  local target_file_or_path = string.sub(line, start_idx, curr_idx)
+  target_file_or_path = string.sub(target_file_or_path, 0, end_idx - 1)
 
   local file_status = vim.fn.filereadable(target_file_or_path) == 1
   local dir_status = vim.fn.isdirectory(target_file_or_path) == 1
@@ -1021,14 +1012,15 @@ local function try_find_file()
     end
     vim.cmd('e ' .. target_file_or_path)
     if file_status then
-      local target_row = tonumber(pos.row) or 1
-      local target_col = tonumber(pos.col) or 0
+      local target_row = tonumber(pos[1]) or 1
+      local target_col = (tonumber(pos[2]) or 1) - 1
       local status, msg = pcall(vim.api.nvim_win_set_cursor, 0, { target_row, target_col })
       if not status then
         vim.notify("WARNING\nError setting cursor at:" .. target_row .. ", " .. target_col .. "\n" .. msg,
           vim.log.levels.WARN,
           { title = "Failed setting cursor" })
       end
+      vim.cmd('normal zz')
     end
   else
     vim.notify("ERROR\n Cannot find target:" .. target_file_or_path, vim.log.levels.ERROR, { title = "Error" })
@@ -1036,7 +1028,3 @@ local function try_find_file()
 end
 
 vim.keymap.set("n", "<leader>gd", try_find_file)
-
-
-
--- ../README.md
