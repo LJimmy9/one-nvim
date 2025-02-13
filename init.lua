@@ -364,6 +364,7 @@ local mini = {
     require("mini.bracketed").setup()
     require("mini.jump").setup()
     require("mini.pairs").setup()
+    require("mini.align").setup()
   end,
 }
 
@@ -902,16 +903,6 @@ local compile_mode = {
     vim.g.compile_mode = {
       -- to add ANSI escape code support, add:
       baleia_setup = true,
-      error_regexp_table = {
-        typescript = {
-          -- TypeScript errors take the form
-          -- "path/to/error-file.ts(13,23): error TS22: etc."
-          regex = "^\\(.\\+\\)(\\([1-9][0-9]*\\),\\([1-9][0-9]*\\)): error TS[1-9][0-9]*:",
-          filename = 1,
-          row = 2,
-          col = 3,
-        }
-      }
     }
 
     vim.keymap.set("n", "rr", function()
@@ -923,11 +914,23 @@ local compile_mode = {
   end
 }
 
+local scan = {
+  "ljimmy9/open-sesame.nvim",
+  -- dir = "~/projects/open-sesame.nvim/",
+  config = function()
+    local open_sesame = require('open-sesame')
+
+    open_sesame.setup({})
+    vim.keymap.set({ "n", "v" }, "<leader>gd", open_sesame.selection_to_path, { noremap = true })
+  end
+}
+
 --- Setup lazy.nvim
 require("lazy").setup({
   spec = {
     -- import your plugins
     {
+      scan,
       compile_mode,
       nvim_dap,
       autosession,
@@ -951,80 +954,3 @@ require("lazy").setup({
   -- automatically check for plugin updates
   checker = { enabled = false },
 })
-
-
--- TODO: Fix bounds checking
--- TODO: Add ~ home directory support
-local function try_find_file()
-  local line = vim.api.nvim_get_current_line()
-  local curr_idx = string.find(line, "[/\\]") or 1
-
-  local function is_valid_char(s)
-    local chars = { '.', '/', [[\]] }
-    for _, c in ipairs(chars) do
-      if s == c then
-        return true
-      end
-    end
-    return false
-  end
-
-  local curr_char = string.sub(line, curr_idx, curr_idx)
-  while is_valid_char(curr_char) do
-    curr_idx = math.max(1, curr_idx - 1)
-    curr_char = string.sub(line, curr_idx, curr_idx)
-  end
-
-  local pos = {
-    "",
-    ""
-  }
-  local pos_idx = 1
-
-  local target_file_or_path = string.sub(line, curr_idx + 1, #line)
-
-  local break_chars = "[ \t\r\n]"
-  local end_idx = string.find(target_file_or_path, ":") or string.find(target_file_or_path, break_chars) or #line + 1
-  curr_idx = end_idx
-  curr_char = string.sub(target_file_or_path, end_idx, end_idx)
-  while (curr_char == ":") do
-    curr_idx = curr_idx + 1
-    curr_char = string.sub(target_file_or_path, curr_idx, curr_idx)
-    while (tonumber(curr_char)) do
-      pos[pos_idx] = pos[pos_idx] .. curr_char
-      curr_idx = curr_idx + 1
-      curr_char = string.sub(target_file_or_path, curr_idx, curr_idx)
-    end
-    pos_idx = 2
-  end
-
-  target_file_or_path = string.sub(target_file_or_path, 0, end_idx - 1)
-
-  local file_status = vim.fn.filereadable(target_file_or_path) == 1
-  local dir_status = vim.fn.isdirectory(target_file_or_path) == 1
-
-  if file_status or dir_status then
-    local has_split = #vim.api.nvim_tabpage_list_wins(0) > 1
-    if has_split then
-      vim.cmd('wincmd p')
-    else
-      vim.cmd('split')
-    end
-    vim.cmd('e ' .. target_file_or_path)
-    if file_status then
-      local target_row = tonumber(pos[1]) or 1
-      local target_col = (tonumber(pos[2]) or 1) - 1
-      local status, msg = pcall(vim.api.nvim_win_set_cursor, 0, { target_row, target_col })
-      if not status then
-        vim.notify("WARNING\nError setting cursor at:" .. target_row .. ", " .. target_col .. "\n" .. msg,
-          vim.log.levels.WARN,
-          { title = "Failed setting cursor" })
-      end
-      vim.cmd('normal zz')
-    end
-  else
-    vim.notify("ERROR\n Cannot find target:" .. target_file_or_path, vim.log.levels.ERROR, { title = "Error" })
-  end
-end
-
-vim.keymap.set("n", "<leader>gd", try_find_file)
