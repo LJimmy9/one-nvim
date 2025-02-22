@@ -22,7 +22,7 @@
   "nvim-ts-autotag": { "branch": "main", "commit": "1cca23c9da708047922d3895a71032bc0449c52d" },
   "nvim-web-devicons": { "branch": "master", "commit": "15c7d0f616ebf88960ce5c4221828f62789d36d9" },
   "oil.nvim": { "branch": "master", "commit": "ba858b662599eab8ef1cba9ab745afded99cb180" },
-  "open-sesame.nvim": { "branch": "main", "commit": "802e8d0c1b55b0b82846f07159cb96b8b412e3bd" },
+  "open-sesame.nvim": { "branch": "main", "commit": "6d3991b3ad75db91e5392ec9a5301b3a5a0d2bc3" },
   "plenary.nvim": { "branch": "master", "commit": "2d9b06177a975543726ce5c73fca176cedbffe9d" },
   "quicker.nvim": { "branch": "master", "commit": "e4fb0b1862284757561d1d51091cdee907585948" },
   "snacks.nvim": { "branch": "main", "commit": "33e1e1689f08a4ffde924e97093c46387b349560" },

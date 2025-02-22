@@ -634,6 +634,11 @@ local nvim_lspconfig = {
       -- Some languages (like typescript) have entire language plugins that can be useful:
       --    https://github.com/pmizio/typescript-tools.nvim
       lua_ls = {},
+      denols = {
+        root_dir = require('lspconfig').util.root_pattern("deno.json", "deno.jsonc"),
+      },
+      zls = {}
+      -- ts_ls = {},
       -- ts_ls = {
       --   cmd = { "node_modules/typescript-language-server/lib/cli.mjs", "--stdio" }
       -- },
