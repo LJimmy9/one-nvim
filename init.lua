@@ -1,12 +1,3 @@
-if vim.fn.has('win32') == 1 or vim.fn.has('win64') == 1 then
-  vim.o.shell = 'powershell'
-  vim.o.shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command '
-  vim.o.shellxquote = ''
-  vim.o.shellquote = ''
-  vim.o.shellredir = '| Out-File -Encoding UTF8 %s'
-  vim.o.shellpipe = '| Out-File -Encoding UTF8 %s'
-end
-
 vim.o.number = true
 vim.o.clipboard = "unnamedplus"
 vim.o.breakindent = true
@@ -93,16 +84,10 @@ local snacks = {
     picker = {
       actions = {
         cust_enter = function(picker, item)
-          -- print("\nChecking inside:\n", vim.inspect(ctx['history']))
-          -- print("\nChecking context", vim.inspect(extra))
           local score = item["score"] or 0
-          -- local selected = item["cmd"] or ""
-          -- print("\nSelected: ", selected)
-          -- local user_cmd = selected
           if score == 0 then
             local hist = picker['history'] or {}
             local input = hist[#hist]['pattern'] or ""
-            -- print("\nInput: ", input)
             local user_cmd = input
             local cmd = '<esc><esc>:' .. user_cmd .. '<cr>'
             local exec = vim.api.nvim_replace_termcodes(cmd, true, false, true)
@@ -148,7 +133,7 @@ local snacks = {
           },
         },
       },
-    }
+    },
   },
 
   keys = {
@@ -378,16 +363,6 @@ local autotags = {
         enable_close_on_slash = false -- Auto close on trailing </
       },
     })
-  end
-}
-
-local tokyonight = {
-  "folke/tokyonight.nvim",
-  lazy = false,
-  priority = 1000,
-  opts = {},
-  config = function()
-    vim.cmd.colorscheme('tokyonight-night')
   end
 }
 
@@ -638,7 +613,6 @@ local nvim_lspconfig = {
         root_dir = require('lspconfig').util.root_pattern("deno.json", "deno.jsonc"),
       },
       zls = {}
-      -- ts_ls = {},
       -- ts_ls = {
       --   cmd = { "node_modules/typescript-language-server/lib/cli.mjs", "--stdio" }
       -- },
@@ -778,119 +752,6 @@ local autosession = {
 
 }
 
-local nvim_dap = {
-  'mfussenegger/nvim-dap',
-  -- lazy = true,
-  dependencies = {
-    'rcarriga/nvim-dap-ui',
-    'nvim-neotest/nvim-nio',
-    'mfussenegger/nvim-dap-python',
-  },
-  keys = {
-    {
-      'dsc',
-      function()
-        require('dap').continue()
-      end,
-      desc = 'Debug: Start/Continue',
-    },
-    {
-      'dsi',
-      function()
-        require('dap').step_into()
-      end,
-      desc = 'Debug: Step Into',
-    },
-    {
-      'dsn',
-      function()
-        require('dap').step_over()
-      end,
-      desc = 'Debug: Step Over',
-    },
-    {
-      'dso',
-      function()
-        require('dap').step_out()
-      end,
-      desc = 'Debug: Step Out',
-    },
-    {
-      'dsb',
-      function()
-        require('dap').toggle_breakpoint()
-      end,
-      desc = 'Debug: Toggle Breakpoint',
-    },
-    {
-      'dse',
-      function()
-        vim.ui.input({ prompt = "Enter expression for breakpoint: " }, function(input)
-          if input then
-            require('dap').toggle_breakpoint(input, nil, nil)
-          else
-            print("No expression provided, using default breakpoint.")
-            require('dap').toggle_breakpoint()
-          end
-        end)
-      end,
-      desc = 'Debug: Toggle Breakpoint',
-    },
-    {
-      'dst',
-      function()
-        require('dapui').toggle()
-      end,
-      desc = 'Debug: See last session result.',
-    },
-  },
-  config = function()
-    local dap = require 'dap'
-    local dapui = require 'dapui'
-    dapui.setup {
-      icons = { expanded = '▾', collapsed = '▸', current_frame = '*' },
-      controls = {
-        icons = {
-          pause = '⏸',
-          play = '▶',
-          step_into = '⏎',
-          step_over = '⏭',
-          step_out = '⏮',
-          step_back = 'b',
-          run_last = '▶▶',
-          terminate = '⏹',
-          disconnect = '⏏',
-        },
-      },
-    }
-    dap.listeners.after.event_initialized['dapui_config'] = dapui.open
-    dap.listeners.before.event_terminated['dapui_config'] = dapui.close
-    dap.listeners.before.event_exited['dapui_config'] = dapui.close
-
-    require('dap-python').setup()
-
-    dap.adapters.lldb = {
-      type = 'executable',
-      command = vim.fn.expand('$HOME') .. '/bin/llvm/19.1.6/bin/lldb-dap', -- adjust as needed, must be absolute path
-      name = 'lldb'
-    }
-    dap.configurations.cpp = {
-      {
-        name = 'Launch',
-        type = 'lldb',
-        request = 'launch',
-        program = function()
-          return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
-        end,
-        cwd = '${workspaceFolder}',
-        stopOnEntry = true,
-        args = {},
-      },
-    }
-    dap.configurations.c = dap.configurations.cpp
-  end
-}
-
 local compile_mode = {
   "ej-shafran/compile-mode.nvim",
   -- you can just use the latest version:
@@ -937,7 +798,6 @@ require("lazy").setup({
     {
       scan,
       compile_mode,
-      nvim_dap,
       autosession,
       gitsigns,
       lualine,
@@ -946,7 +806,6 @@ require("lazy").setup({
       nvim_lspconfig,
       quicker,
       neogit,
-      tokyonight,
       autotags,
       mini,
       snacks,
