@@ -9,6 +9,9 @@ vim.o.shiftwidth = 2
 vim.o.swapfile = false
 vim.o.backup = false
 
+vim.o.shellcmdflag = '-c'
+vim.o.shellxquote = ''
+
 vim.o.foldlevel = 99
 vim.o.foldtext = ""
 vim.o.foldlevelstart = 99
@@ -20,6 +23,7 @@ vim.keymap.set("n", "<esc>", [[:nohl<CR>]])
 vim.keymap.set("n", "<leader>qq", [[:q<CR>]])
 vim.keymap.set("n", "<leader>ss", [[:w<CR>]])
 vim.keymap.set("n", "<leader>so", [[:so<CR>]])
+vim.keymap.set("n", "<leader>cd", [[:cd %:p:h<CR>]], { desc = "Changes to current file's dir" })
 
 vim.keymap.set({ "v" }, "y", [[y'>]])
 vim.keymap.set('t', '<esc>', '<C-\\><C-n>')
@@ -29,7 +33,6 @@ vim.keymap.set({ "n", "v" }, "<c-e>", "$")
 vim.keymap.set({ "i" }, "<c-a>", "<c-o>_")
 vim.keymap.set({ "i" }, "<c-e>", "<c-o>$")
 vim.keymap.set({ "i" }, "<c-y>", "<c-o>p")
-
 --- Autoread
 vim.o.autoread = true -- Only works for file changes detected outside of vim
 local auto_reload_group = vim.api.nvim_create_augroup("AutoReload", { clear = true })
@@ -325,6 +328,7 @@ local conform = {
 local undotree = {
   "mbbill/undotree",
   config = function()
+    vim.g.undotree_DiffCommand = "FC"
     vim.keymap.set("n", "<leader>uu", vim.cmd.UndotreeToggle)
   end,
 }
