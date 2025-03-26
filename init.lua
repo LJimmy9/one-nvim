@@ -309,18 +309,11 @@ local conform = {
   'stevearc/conform.nvim',
   opts = {
     formatters_by_ft = {
-      typescript = { { 'prettierd', "prettier" } },
-      typescriptreact = { { 'prettierd', "prettier" } },
-      javascript = { { 'prettierd', "prettier" } },
-      javascriptreact = { { 'prettierd', "prettier" } },
-      json = { { 'prettierd', "prettier" } },
-      html = { { 'prettierd', "prettier" } },
-      css = { { 'prettierd', "prettier" } },
+      ["*"] = { "codespell" },
     },
     format_on_save = {
-      -- These options will be passed to conform.format()
-      timeout_ms = 500,
       lsp_format = "fallback",
+      timeout_ms = 500,
     },
   }
 }
@@ -648,7 +641,7 @@ local lazydev = {
 local blink = {
   'saghen/blink.cmp',
   dependencies = 'rafamadriz/friendly-snippets',
-  version = '*',
+  version = '1.*',
   opts = {
     -- 'default' for mappings similar to built-in completion
     -- 'super-tab' for mappings similar to vscode (tab to accept, arrow keys to navigate)
@@ -656,22 +649,31 @@ local blink = {
     -- See the full "keymap" documentation for information on defining your own keymap.
     keymap = {
       preset = 'enter',
-      cmdline = {
-        preset = 'enter',
+      -- cmdline = {
+      --   preset = 'enter',
+      -- }
+    },
+    cmdline = {
+      enabled = true,
+      keymap = { preset = 'cmdline' },
+      completion = {
+        menu = { auto_show = true },
       }
     },
     appearance = {
       -- Sets the fallback highlight groups to nvim-cmp's highlight groups
       -- Useful for when your theme doesn't support blink.cmp
       -- Will be removed in a future release
-      use_nvim_cmp_as_default = true,
+      -- use_nvim_cmp_as_default = true,
       -- Set to 'mono' for 'Nerd Font Mono' or 'normal' for 'Nerd Font'
       -- Adjusts spacing to ensure icons are aligned
       nerd_font_variant = 'mono'
     },
+    completion = { documentation = { auto_show = true } },
     sources = {
       default = { 'lsp', 'path', 'snippets', 'buffer' },
     },
+    fuzzy = { implementation = "prefer_rust_with_warning" }
   },
   opts_extend = { "sources.default" }
 
