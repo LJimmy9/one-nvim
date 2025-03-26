@@ -616,13 +616,14 @@ local nvim_lspconfig = {
       denols = {
         root_dir = require('lspconfig').util.root_pattern("deno.json", "deno.jsonc"),
       },
-      zls = {}
+      zls = {},
       -- ts_ls = {
-      --   cmd = { "node_modules/typescript-language-server/lib/cli.mjs", "--stdio" }
+      --   root_dir = require('lspconfig').util.root_pattern("package.json"),
+      --   cmd = { "bun", "run", "node_modules/typescript-language-server/lib/cli.mjs", "--stdio" },
       -- },
-      -- svelte = {
-      --   cmd = { "node_modules/svelte-language-server/bin/server.js", "--stdio" }
-      -- }
+      svelte = {
+        cmd = { "bun", "run", "node_modules/svelte-language-server/bin/server.js", "--stdio" }
+      }
     }
 
     for server_name, config in pairs(servers) do
@@ -822,3 +823,5 @@ require("lazy").setup({
   -- automatically check for plugin updates
   checker = { enabled = false },
 })
+
+vim.cmd([[colorscheme slate]])
