@@ -28,6 +28,9 @@ vim.keymap.set("n", "<leader>cd", [[:cd %:p:h<CR>]], { desc = "Changes to curren
 vim.keymap.set({ "v" }, "y", [[y'>]])
 vim.keymap.set('t', '<esc>', '<C-\\><C-n>')
 
+vim.keymap.set('v', 'J', ':m \'>+1<CR>gv=gv', { noremap = true })
+vim.keymap.set('v', 'K', ':m \'<-2<CR>gv=gv', { noremap = true })
+
 vim.keymap.set({ "n", "v" }, "<c-a>", "_")
 vim.keymap.set({ "n", "v" }, "<c-e>", "$")
 vim.keymap.set({ "i" }, "<c-a>", "<c-o>_")
@@ -640,7 +643,10 @@ local lazydev = {
 
 local blink = {
   'saghen/blink.cmp',
-  dependencies = 'rafamadriz/friendly-snippets',
+  dependencies = {
+    'rafamadriz/friendly-snippets',
+    -- ... Other dependencies
+  },
   version = '1.*',
   opts = {
     -- 'default' for mappings similar to built-in completion
@@ -655,7 +661,7 @@ local blink = {
     },
     cmdline = {
       enabled = true,
-      keymap = { preset = 'cmdline' },
+      keymap = { preset = 'enter' },
       completion = {
         menu = { auto_show = true },
       }
@@ -676,7 +682,6 @@ local blink = {
     fuzzy = { implementation = "prefer_rust_with_warning" }
   },
   opts_extend = { "sources.default" }
-
 }
 
 local lualine = {
@@ -715,7 +720,7 @@ local autosession = {
     auto_create = true,                                    -- Enables/disables auto creating new session files. Can take a function that should return true/false if a new session file should be created or not
     allowed_dirs = { '~/projects/*', '~/termux-config/' }, -- Allow session restore/create in certain directories
     suppressed_dirs = { '~/', '~/Projects', '~/Downloads', '/' },
-    auto_restore_last_session = false,                     -- On startup, loads the last saved session if session for cwd does not exist
+    auto_restore_last_session = true,                      -- On startup, loads the last saved session if session for cwd does not exist
     use_git_branch = true,                                 -- Include git branch name in session name
     lazy_support = true,                                   -- Automatically detect if Lazy.nvim is being used and wait until Lazy is done to make sure session is restored correctly. Does nothing if Lazy isn't being used. Can be disabled if a problem is suspected or for debugging
     bypass_save_filetypes = nil,                           -- List of filetypes to bypass auto save when the only buffer open is one of the file types listed, useful to ignore dashboards
@@ -798,11 +803,81 @@ local scan = {
   end
 }
 
+local gp = {
+  "robitx/gp.nvim",
+  config = function()
+    local conf = {
+      -- For customization, refer to Install > Configuration in the Documentation/Readme
+      providers = {
+        openai = {
+          disable = true,
+          endpoint = "https://api.openai.com/v1/chat/completions",
+          -- secret = os.getenv("OPENAI_API_KEY"),
+        },
+        ollama = {
+          -- endpoint = "http://localhost:11434/v1/chat/completions",
+          endpoint = os.getenv("OLLAMA_ENDPOINT")
+        },
+      },
+      agents = {
+        {
+          name = "ChatOllamaLlama3.1-8B",
+          disable = true,
+        },
+        {
+          name = "qwen2.5-coder:14b",
+          chat = true,
+          command = true,
+          provider = "ollama",
+          model = { model = "qwen2.5-coder:14b" },
+          system_prompt = "I am an AI meticulously crafted to provide programming guidance and code assistance. "
+              .. "To best serve you as a computer programmer, please provide detailed inquiries and code snippets when necessary, "
+              .. "and expect precise, technical responses tailored to your development needs.\n",
+        },
+        {
+          name = "deepseek-coder:6.7b",
+          chat = true,
+          command = true,
+          provider = "ollama",
+          model = { model = "deepseek-coder:6.7b" },
+          system_prompt = "I am an AI meticulously crafted to provide programming guidance and code assistance. "
+              .. "To best serve you as a computer programmer, please provide detailed inquiries and code snippets when necessary, "
+              .. "and expect precise, technical responses tailored to your development needs.\n",
+        },
+      }
+    }
+    require("gp").setup(conf)
+
+    -- Setup shortcuts here (see Usage > Shortcuts in the Documentation/Readme)
+    local function keymapOptions(desc)
+      return {
+        noremap = true,
+        silent = true,
+        nowait = true,
+        desc = "GPT prompt " .. desc,
+      }
+    end
+
+    vim.keymap.set({ "n" }, "<leader>ac", "<cmd>GpChatNew<cr>", keymapOptions("New Chat"))
+    vim.keymap.set({ "n" }, "<leader>at", "<cmd>GpChatToggle<cr>", keymapOptions("Toggle Chat"))
+
+    -- Doesnt really work?
+    vim.keymap.set({ "n" }, "<leader>af", "<cmd>GpChatFinder<cr>", keymapOptions("Toggle Chat"))
+
+    vim.keymap.set({ "n" }, "<leader>as", "<cmd>GpStop<cr>", keymapOptions("Stop"))
+    vim.keymap.set({ "n" }, "<leader>an", "<cmd>GpNextAgent<cr>", keymapOptions("Next Agent"))
+
+    vim.keymap.set({ "n", "v" }, "<leader>ae", "<cmd>GpRewrite<cr>", keymapOptions("Inline Rewrite"))
+    vim.keymap.set("v", "<leader>aa", ":<C-u>'<,'>GpChatPaste<cr>", keymapOptions("Visual Chat Paste"))
+  end
+}
+
 --- Setup lazy.nvim
 require("lazy").setup({
   spec = {
     -- import your plugins
     {
+      gp,
       scan,
       compile_mode,
       autosession,
