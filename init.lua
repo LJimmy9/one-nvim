@@ -9,6 +9,8 @@ vim.o.shiftwidth = 2
 vim.o.swapfile = false
 vim.o.backup = false
 
+vim.o.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
+
 vim.o.shellcmdflag = '-c'
 vim.o.shellxquote = ''
 
@@ -25,6 +27,56 @@ vim.keymap.set("n", "<leader>ss", [[:w<CR>]])
 vim.keymap.set("n", "<leader>so", [[:so<CR>]])
 vim.keymap.set("n", "<leader>cd", [[:cd %:p:h<CR>]], { desc = "Changes to current file's dir" })
 
+vim.keymap.set("n", "<leader>bd", [[:bd<CR>]])
+
+-- Navigation mappings
+vim.keymap.set('n', 'H', '_', { noremap = true })
+vim.keymap.set('n', 'L', '$', { noremap = true })
+vim.keymap.set('v', 'H', '_', { noremap = true })
+vim.keymap.set('v', 'L', '$', { noremap = true })
+
+local quotes = { '"', "'", '`' }
+local brackets = { '{', '}' }
+local parenthesis = { '(', ')' }
+
+local function find_text_type(chars)
+  local line_number = vim.fn.line('.')
+  local line_content = vim.fn.getline(line_number) -- Get current line content
+  for _, c in ipairs(chars) do
+    local isMatch = string.find(line_content, c, 1, true) ~= nil
+    if isMatch then
+      return c
+    end
+  end
+  return ""
+end
+
+local actions = { 'vi', 'ci', 'di', 'va', 'ca', 'da' }
+
+for _, a in ipairs(actions) do
+  vim.keymap.set({ 'n' }, a .. 'q', function()
+    local text_object = find_text_type(quotes)
+    vim.api.nvim_input(a .. text_object)
+  end, { noremap = true, desc = "Around quotes" })
+  vim.keymap.set({ 'n' }, a .. 'b', function()
+    local text_object = find_text_type(brackets)
+    vim.api.nvim_input(a .. text_object)
+  end, { noremap = true, desc = "Around brackets" })
+  vim.keymap.set({ 'n' }, a .. 'p', function()
+    local text_object = find_text_type(parenthesis)
+    vim.api.nvim_input(a .. text_object)
+  end, { noremap = true, desc = "Around parenthesis" })
+
+  vim.keymap.set({ 'n' }, a .. ' ', function()
+    local keys = a .. 'p'
+    vim.api.nvim_feedkeys(
+      vim.api.nvim_replace_termcodes(keys, true, false, true),
+      'n', -- 'n' mode: non-recursive, uses default keybinds
+      false
+    )
+  end, { noremap = true, desc = "Default text object action around a paragraph" })
+end
+
 vim.keymap.set({ "v" }, "y", [[y'>]])
 vim.keymap.set('t', '<esc>', '<C-\\><C-n>')
 
@@ -36,7 +88,7 @@ vim.keymap.set({ "n", "v" }, "<c-e>", "$")
 vim.keymap.set({ "i" }, "<c-a>", "<c-o>_")
 vim.keymap.set({ "i" }, "<c-e>", "<c-o>$")
 vim.keymap.set({ "i" }, "<c-y>", "<c-o>p")
---- Autoread
+
 vim.o.autoread = true -- Only works for file changes detected outside of vim
 local auto_reload_group = vim.api.nvim_create_augroup("AutoReload", { clear = true })
 vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter" }, {
@@ -51,7 +103,7 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter" }, {
 local exec_lua = vim.api.nvim_replace_termcodes(':lua<CR>', true, false, true)
 vim.keymap.set({ "v" }, "<leader>xe", function() vim.api.nvim_feedkeys(exec_lua, 't', false) end)
 
---- Plugins
+-- Plugin bootstrap
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
   local lazyrepo = "https://github.com/folke/lazy.nvim.git"
@@ -332,18 +384,11 @@ local undotree = {
 local mini = {
   "echasnovski/mini.nvim",
   config = function()
-    require("mini.ai").setup()
     require("mini.surround").setup({
       mappings = {
-        add = 'za',            -- Add surrounding in Normal and Visual modes
-        delete = 'zd',         -- Delete surrounding
-        find = 'zf',           -- Find surrounding (to the right)
-        find_left = 'zF',      -- Find surrounding (to the left)
-        highlight = 'zh',      -- Highlight surrounding
-        replace = 'zr',        -- Replace surrounding
-        update_n_lines = 'zn', -- Update `n_lines`
-        suffix_last = 'l',     -- Suffix to search with "prev" method
-        suffix_next = 'n',     -- Suffix to search with "next" method
+        add = 'csa',    -- Add surrounding in Normal and Visual modes
+        delete = 'ds',  -- Delete surrounding
+        replace = 'cr', -- Replace surrounding
       },
     })
     require("mini.bracketed").setup()
@@ -378,26 +423,31 @@ local gitsigns = {
         vim.keymap.set(mode, l, r, opts)
       end
       -- Navigation
-      map('n', ']h', function()
+      map('n', ']g', function()
         if vim.wo.diff then
-          vim.cmd.normal({ ']h', bang = true })
+          vim.cmd.normal({ ']g', bang = true })
+          vim.cmd.normal({ 'zz', bang = true })
         else
           gitsigns.nav_hunk('next')
         end
       end)
 
-      map('n', '[h', function()
+      map('n', '[g', function()
         if vim.wo.diff then
-          vim.cmd.normal({ '[h', bang = true })
+          vim.cmd.normal({ '[g', bang = true })
+          vim.cmd.normal({ 'zz', bang = true })
         else
           gitsigns.nav_hunk('prev')
         end
       end)
 
       -- Actions
-      map('n', 'tb', gitsigns.toggle_current_line_blame)
-      map('n', 'td', gitsigns.toggle_deleted)
-      map('n', 'tr', gitsigns.reset_hunk)
+      map('n', '<leader>gb', gitsigns.toggle_current_line_blame)
+      map('n', '<leader>gt', gitsigns.toggle_deleted)
+      map('n', '<leader>gs', gitsigns.stage_hunk, { desc = "Stage/Unstage hunk" })
+      map('n', '<leader>gr', gitsigns.reset_hunk, { desc = "Reset hunk" })
+      map('n', '<leader>gp', gitsigns.preview_hunk, { desc = "Preview hunk in popup" })
+      map('n', '<leader>gq', ":Gitsign setqflist<CR>", { desc = "Preview hunk in popup" })
 
       -- Text object
       map({ 'o', 'x' }, 'ih', ':<C-U>Gitsigns select_hunk<CR>')
@@ -688,7 +738,7 @@ local lualine = {
   'nvim-lualine/lualine.nvim',
   dependencies = { 'nvim-tree/nvim-web-devicons' },
   opts = {
-    theme = 'gruvbox-material',
+    theme = "adwaita",
     sections = {
       lualine_a = { 'mode' },
       lualine_b = { 'branch', 'diff', 'diagnostics' },
@@ -705,51 +755,21 @@ local autosession = {
   'rmagatti/auto-session',
   lazy = false,
   keys = {
-    -- Will use Telescope if installed or a vim.ui.select picker otherwise
     { '<leader>fs', '<cmd>SessionSearch<CR>', desc = 'Session search' },
   },
-  ---enables autocomplete for opts
   ---@module "auto-session"
   ---@type AutoSession.Config
   opts = {
-    -- log_level = 'debug',
-    enabled = true,                                        -- Enables/disables auto creating, saving and restoring
-    root_dir = vim.fn.stdpath "data" .. "/sessions/",      -- Root dir where sessions will be stored
-    auto_save = true,                                      -- Enables/disables auto saving session on exit
-    auto_restore = true,                                   -- Enables/disables auto restoring session on start
-    auto_create = true,                                    -- Enables/disables auto creating new session files. Can take a function that should return true/false if a new session file should be created or not
-    allowed_dirs = { '~/projects/*', '~/termux-config/' }, -- Allow session restore/create in certain directories
-    suppressed_dirs = { '~/', '~/Projects', '~/Downloads', '/' },
-    auto_restore_last_session = true,                      -- On startup, loads the last saved session if session for cwd does not exist
-    use_git_branch = true,                                 -- Include git branch name in session name
-    lazy_support = true,                                   -- Automatically detect if Lazy.nvim is being used and wait until Lazy is done to make sure session is restored correctly. Does nothing if Lazy isn't being used. Can be disabled if a problem is suspected or for debugging
-    bypass_save_filetypes = nil,                           -- List of filetypes to bypass auto save when the only buffer open is one of the file types listed, useful to ignore dashboards
-    close_unsupported_windows = true,                      -- Close windows that aren't backed by normal file before autosaving a session
-    args_allow_single_directory = true,                    -- Follow normal sesion save/load logic if launched with a single directory as the only argument
-    args_allow_files_auto_save = false,                    -- Allow saving a session even when launched with a file argument (or multiple files/dirs). It does not load any existing session first. While you can just set this to true, you probably want to set it to a function that decides when to save a session when launched with file args. See documentation for more detail
-    continue_restore_on_error = true,                      -- Keep loading the session even if there's an error
-    show_auto_restore_notif = false,                       -- Whether to show a notification when auto-restoring
-    cwd_change_handling = false,                           -- Follow cwd changes, saving a session before change and restoring after
-    lsp_stop_on_restore = false,                           -- Should language servers be stopped when restoring a session. Can also be a function that will be called if set. Not called on autorestore from startup
-    log_level = "error",                                   -- Sets the log level of the plugin (debug, info, warn, error).
-
+    enabled = true,                                   -- Enables/disables auto creating, saving and restoring
+    root_dir = vim.fn.stdpath "data" .. "/sessions/", -- Root dir where sessions will be stored
+    auto_save = true,                                 -- Enables/disables auto saving session on exit
     session_lens = {
-      load_on_setup = false, -- Initialize on startup (requires Telescope)
-      theme_conf = {         -- Pass through for Telescope theme options
-        -- layout_config = { -- As one example, can change width/height of picker
-        --   width = 0.8,    -- percent of window
-        --   height = 0.5,
-        -- },
-      },
-      previewer = false, -- File preview for session picker
-
       mappings = {
         -- Mode can be a string or a table, e.g. {"i", "n"} for both insert and normal mode
-        delete_session = { "i", "<C-D>" },
+        delete_session = { "i", "<C-X>" },
         alternate_session = { "i", "<C-S>" },
         copy_session = { "i", "<C-Y>" },
       },
-
       session_control = {
         control_dir = vim.fn.stdpath "data" .. "/auto_session/", -- Auto session control dir, for control files, like alternating between two sessions with session-lens
         control_filename = "session_control.json",               -- File name of the session control file
@@ -761,125 +781,139 @@ local autosession = {
       end
     }
   },
-
 }
 
-local compile_mode = {
-  "ej-shafran/compile-mode.nvim",
-  -- you can just use the latest version:
-  branch = "latest",
-  -- or the most up-to-date updates:
-  -- branch = "nightly",
-  dependencies = {
-    "nvim-lua/plenary.nvim",
-    -- if you want to enable coloring of ANSI escape codes in
-    -- compilation output, add:
-    { "m00qek/baleia.nvim", tag = "v1.3.0" },
-  },
-  config = function()
-    ---@type CompileModeOpts
-    vim.g.compile_mode = {
-      -- to add ANSI escape code support, add:
-      baleia_setup = true,
-    }
+local adwaita = {
+  "Mofiqul/adwaita.nvim",
+  lazy = false,
+  priority = 1000,
+}
 
-    vim.keymap.set("n", "rr", function()
-      vim.cmd([[botright Compile]])
+local multicursor = {
+  "jake-stewart/multicursor.nvim",
+  branch = "1.0",
+  config = function()
+    local mc = require("multicursor-nvim")
+    mc.setup()
+
+    -- Add or skip adding a new cursor by matching word/selection
+    vim.keymap.set({ "n", "x" }, "*", function() mc.matchAddCursor(1) end)
+
+    -- Add and remove cursors with control + left click.
+    vim.keymap.set("n", "<c-leftmouse>", mc.handleMouse)
+    vim.keymap.set("n", "<c-leftdrag>", mc.handleMouseDrag)
+    vim.keymap.set("n", "<c-leftrelease>", mc.handleMouseRelease)
+
+    -- Disable and enable cursors.
+    vim.keymap.set({ "n", "x" }, "<c-q>", mc.toggleCursor)
+
+    -- Mappings defined in a keymap layer only apply when there are
+    -- multiple cursors. This lets you have overlapping mappings.
+    mc.addKeymapLayer(function(layerSet)
+      -- Select a different cursor as the main one.
+      layerSet({ "n", "x" }, "<left>", mc.prevCursor)
+      layerSet({ "n", "x" }, "<right>", mc.nextCursor)
+
+      -- Enable and clear cursors using escape.
+      layerSet("n", "<esc>", function()
+        if not mc.cursorsEnabled() then
+          mc.enableCursors()
+        else
+          mc.clearCursors()
+        end
+      end)
     end)
-    vim.keymap.set("n", "rc", function()
-      vim.cmd([[botright Recompile]])
-    end)
+
+    vim.api.nvim_set_hl(0, "MultiCursorCursor", { reverse = true })
+    vim.api.nvim_set_hl(0, "MultiCursorVisual", { link = "Visual" })
+    vim.api.nvim_set_hl(0, "MultiCursorSign", { link = "SignColumn" })
+    vim.api.nvim_set_hl(0, "MultiCursorMatchPreview", { link = "Search" })
+    vim.api.nvim_set_hl(0, "MultiCursorDisabledCursor", { reverse = true })
+    vim.api.nvim_set_hl(0, "MultiCursorDisabledVisual", { link = "Visual" })
+    vim.api.nvim_set_hl(0, "MultiCursorDisabledSign", { link = "SignColumn" })
   end
 }
 
-local scan = {
-  "ljimmy9/open-sesame.nvim",
-  -- dir = "~/projects/open-sesame.nvim/",
+vim.o.showtabline = 2
+local tabby = {
+  'nanozuki/tabby.nvim',
+  -- event = 'VimEnter', -- if you want lazy load, see below
+  dependencies = 'nvim-tree/nvim-web-devicons',
   config = function()
-    local open_sesame = require('open-sesame')
-
-    open_sesame.setup({})
-    vim.keymap.set({ "n", "v" }, "<leader>gd", open_sesame.selection_to_path, { noremap = true })
-  end
-}
-
-local gp = {
-  "robitx/gp.nvim",
-  config = function()
-    local conf = {
-      -- For customization, refer to Install > Configuration in the Documentation/Readme
-      providers = {
-        openai = {
-          disable = true,
-          endpoint = "https://api.openai.com/v1/chat/completions",
-          -- secret = os.getenv("OPENAI_API_KEY"),
-        },
-        ollama = {
-          -- endpoint = "http://localhost:11434/v1/chat/completions",
-          endpoint = os.getenv("OLLAMA_ENDPOINT")
-        },
-      },
-      agents = {
-        {
-          name = "ChatOllamaLlama3.1-8B",
-          disable = true,
-        },
-        {
-          name = "qwen2.5-coder:14b",
-          chat = true,
-          command = true,
-          provider = "ollama",
-          model = { model = "qwen2.5-coder:14b" },
-          system_prompt = "I am an AI meticulously crafted to provide programming guidance and code assistance. "
-              .. "To best serve you as a computer programmer, please provide detailed inquiries and code snippets when necessary, "
-              .. "and expect precise, technical responses tailored to your development needs.\n",
-        },
-        {
-          name = "deepseek-coder:6.7b",
-          chat = true,
-          command = true,
-          provider = "ollama",
-          model = { model = "deepseek-coder:6.7b" },
-          system_prompt = "I am an AI meticulously crafted to provide programming guidance and code assistance. "
-              .. "To best serve you as a computer programmer, please provide detailed inquiries and code snippets when necessary, "
-              .. "and expect precise, technical responses tailored to your development needs.\n",
-        },
-      }
+    local theme = {
+      fill = 'TabLineFill', -- Links to Adwaita's TablineFill (fg = #DEDDDA, bg = #303030)
+      head = { fg = '#57E389', bg = '#1D1D1D', style = 'italic' },
+      current_tab = { fg = '#000000', bg = '#26A269', style = 'italic' },
+      tab = { fg = '#c5cdd9', bg = '#1c1e26', style = 'italic' },
+      win = { fg = '#303030', bg = '#193D66', style = 'italic' },
+      tail = { fg = '#62A0EA', bg = '#1D1D1D', style = 'italic' },
     }
-    require("gp").setup(conf)
 
-    -- Setup shortcuts here (see Usage > Shortcuts in the Documentation/Readme)
-    local function keymapOptions(desc)
+    require('tabby.tabline').set(function(line)
       return {
-        noremap = true,
-        silent = true,
-        nowait = true,
-        desc = "GPT prompt " .. desc,
+        {
+          { '  ', hl = theme.head },
+          line.sep('', theme.head, theme.fill),
+        },
+        line.tabs().foreach(function(tab)
+          local hl = tab.is_current() and theme.current_tab or theme.tab
+
+          -- remove count of wins in tab with [n+] included in tab.name()
+          local name = tab.name()
+          local index = string.find(name, "%[%d")
+          local tab_name = index and string.sub(name, 1, index - 1) or name
+
+          -- indicate if any of buffers in tab have unsaved changes
+          local modified = false
+          local win_ids = require('tabby.module.api').get_tab_wins(tab.id)
+          for _, win_id in ipairs(win_ids) do
+            if pcall(vim.api.nvim_win_get_buf, win_id) then
+              local bufid = vim.api.nvim_win_get_buf(win_id)
+              if vim.api.nvim_buf_get_option(bufid, "modified") then
+                modified = true
+                break
+              end
+            end
+          end
+
+          return {
+            line.sep('', hl, theme.fill),
+            tab.number(),
+            tab_name,
+            modified and '',
+            tab.close_btn(''),
+            line.sep('', hl, theme.fill),
+            hl = hl,
+            margin = ' ',
+          }
+        end),
+        line.spacer(),
+        {
+          line.sep('', theme.tail, theme.fill),
+          { '  ', hl = theme.tail },
+        },
+        hl = theme.fill,
       }
-    end
-
-    vim.keymap.set({ "n" }, "<leader>ac", "<cmd>GpChatNew<cr>", keymapOptions("New Chat"))
-    vim.keymap.set({ "n" }, "<leader>at", "<cmd>GpChatToggle<cr>", keymapOptions("Toggle Chat"))
-
-    -- Doesnt really work?
-    vim.keymap.set({ "n" }, "<leader>af", "<cmd>GpChatFinder<cr>", keymapOptions("Toggle Chat"))
-
-    vim.keymap.set({ "n" }, "<leader>as", "<cmd>GpStop<cr>", keymapOptions("Stop"))
-    vim.keymap.set({ "n" }, "<leader>an", "<cmd>GpNextAgent<cr>", keymapOptions("Next Agent"))
-
-    vim.keymap.set({ "n", "v" }, "<leader>ae", "<cmd>GpRewrite<cr>", keymapOptions("Inline Rewrite"))
-    vim.keymap.set("v", "<leader>aa", ":<C-u>'<,'>GpChatPaste<cr>", keymapOptions("Visual Chat Paste"))
-  end
+    end)
+    vim.api.nvim_set_keymap("n", "<leader>ta", ":$tabnew<CR>", { noremap = true })
+    vim.api.nvim_set_keymap("n", "<leader>tc", ":tabclose<CR>", { noremap = true })
+    vim.api.nvim_set_keymap("n", "<leader>to", ":tabonly<CR>", { noremap = true })
+    vim.api.nvim_set_keymap("n", "<Tab>", ":tabn<CR>", { noremap = true })
+    vim.api.nvim_set_keymap("n", "<S-Tab>", ":tabp<CR>", { noremap = true })
+    -- move current tab to previous position
+    vim.api.nvim_set_keymap("n", "<leader>tmp", ":-tabmove<CR>", { noremap = true })
+    -- move current tab to next position
+    vim.api.nvim_set_keymap("n", "<leader>tmn", ":+tabmove<CR>", { noremap = true })
+  end,
 }
 
 --- Setup lazy.nvim
 require("lazy").setup({
   spec = {
-    -- import your plugins
     {
-      gp,
-      scan,
-      compile_mode,
+      adwaita,
+      tabby,
+      multicursor,
       autosession,
       gitsigns,
       lualine,
@@ -901,4 +935,4 @@ require("lazy").setup({
   checker = { enabled = false },
 })
 
-vim.cmd([[colorscheme slate]])
+vim.cmd([[colorscheme adwaita]])
