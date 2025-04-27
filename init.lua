@@ -446,7 +446,7 @@ local gitsigns = {
       map('n', '<leader>gt', gitsigns.toggle_deleted)
       map('n', '<leader>gs', gitsigns.stage_hunk, { desc = "Stage/Unstage hunk" })
       map('n', '<leader>gr', gitsigns.reset_hunk, { desc = "Reset hunk" })
-      map('n', '<leader>gp', gitsigns.preview_hunk, { desc = "Preview hunk in popup" })
+      map('n', 'gp', gitsigns.preview_hunk, { desc = "Preview hunk in popup" })
       map('n', '<leader>gq', ":Gitsign setqflist<CR>", { desc = "Preview hunk in popup" })
 
       -- Text object
@@ -515,7 +515,9 @@ local neogit = {
           ["<c-p>"] = "Previous",
           ["<down>"] = "Next",
           ["<up>"] = "Previous",
-          ["<tab>"] = "InsertCompletion",
+          -- ["<tab>"] = "InsertCompletion",
+          ["<tab>"] = false,
+          ["zo"] = "InsertCompletion",
           ["<space>"] = "MultiselectToggleNext",
           ["<s-space>"] = "MultiselectTogglePrevious",
           ["<c-j>"] = "NOP",
@@ -561,7 +563,9 @@ local neogit = {
           ["3"] = "Depth3",
           ["4"] = "Depth4",
           ["Q"] = "Command",
-          ["<tab>"] = "Toggle",
+          -- ["<tab>"] = "Toggle",
+          ["<tab>"] = false,
+          ["zo"] = "Toggle",
           ["x"] = "Discard",
           ["s"] = "Stage",
           ["S"] = "StageUnstaged",
@@ -654,7 +658,7 @@ local nvim_lspconfig = {
       -- gopls = {},
       -- pyright = {},
       pylsp = {},
-      -- rust_analyzer = {},
+      rust_analyzer = {},
       -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
       -- Some languages (like typescript) have entire language plugins that can be useful:
       --    https://github.com/pmizio/typescript-tools.nvim
