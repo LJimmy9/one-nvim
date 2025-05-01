@@ -35,48 +35,6 @@ vim.keymap.set('n', 'L', '$', { noremap = true })
 vim.keymap.set('v', 'H', '_', { noremap = true })
 vim.keymap.set('v', 'L', '$', { noremap = true })
 
-local quotes = { '"', "'", '`' }
-local brackets = { '{', '}' }
-local parenthesis = { '(', ')' }
-
-local function find_text_type(chars)
-  local line_number = vim.fn.line('.')
-  local line_content = vim.fn.getline(line_number) -- Get current line content
-  for _, c in ipairs(chars) do
-    local isMatch = string.find(line_content, c, 1, true) ~= nil
-    if isMatch then
-      return c
-    end
-  end
-  return ""
-end
-
-local actions = { 'vi', 'ci', 'di', 'va', 'ca', 'da' }
-
-for _, a in ipairs(actions) do
-  vim.keymap.set({ 'n' }, a .. 'q', function()
-    local text_object = find_text_type(quotes)
-    vim.api.nvim_input(a .. text_object)
-  end, { noremap = true, desc = "Around quotes" })
-  vim.keymap.set({ 'n' }, a .. 'b', function()
-    local text_object = find_text_type(brackets)
-    vim.api.nvim_input(a .. text_object)
-  end, { noremap = true, desc = "Around brackets" })
-  vim.keymap.set({ 'n' }, a .. 'p', function()
-    local text_object = find_text_type(parenthesis)
-    vim.api.nvim_input(a .. text_object)
-  end, { noremap = true, desc = "Around parenthesis" })
-
-  vim.keymap.set({ 'n' }, a .. ' ', function()
-    local keys = a .. 'p'
-    vim.api.nvim_feedkeys(
-      vim.api.nvim_replace_termcodes(keys, true, false, true),
-      'n', -- 'n' mode: non-recursive, uses default keybinds
-      false
-    )
-  end, { noremap = true, desc = "Default text object action around a paragraph" })
-end
-
 vim.keymap.set({ "v" }, "y", [[y'>]])
 vim.keymap.set('t', '<esc>', '<C-\\><C-n>')
 
@@ -384,11 +342,18 @@ local undotree = {
 local mini = {
   "echasnovski/mini.nvim",
   config = function()
+    require("mini.ai").setup()
     require("mini.surround").setup({
       mappings = {
-        add = 'csa',    -- Add surrounding in Normal and Visual modes
-        delete = 'ds',  -- Delete surrounding
-        replace = 'cr', -- Replace surrounding
+        add = 'csa',           -- Add surrounding in Normal and Visual modes
+        delete = 'css',        -- Delete surrounding
+        replace = 'csr',       -- Replace surrounding
+        find = 'cf',           -- Find surrounding (to the right)
+        find_left = 'cF',      -- Find surrounding (to the left)
+        highlight = 'ch',      -- Highlight surrounding
+        update_n_lines = 'cn', -- Update `n_lines`
+        suffix_last = 'l',     -- Suffix to search with "prev" method
+        suffix_next = 'n',     -- Suffix to search with "next" method
       },
     })
     require("mini.bracketed").setup()
